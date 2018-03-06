@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { getRoomData, getChatLog, sendNewMessage } from '../actions';
+import { Link } from 'react-router-dom';
 import { db } from '../firebase';
 
 class ChatRoom extends Component {
@@ -16,14 +17,14 @@ class ChatRoom extends Component {
         const { roomId, logId } = this.props.match.params;
 
         this.props.getRoomData(roomId, logId);
-    }
-
-    componentWillReceiveProps(nextProps){
-        if(!this.props.roomInfo.chatLogId && nextProps.roomInfo.chatLogId){
-            this.dbLogRef = db.ref(`/chat-logs/${nextProps.roomInfo.chatLogId}`).on('value', snapshot=>{
+        
+        this.dbLogRef = db.ref(`/chat-logs/${logId}`).on('value', snapshot=>{
                 this.props.getChatLog(snapshot.val());
             })
-        }
+    }
+
+    componentWillUnmount(){
+        db.ref(`/chat-logs/${this.props.match.params.logId}`).off()
     }
 
     sendMessage(e){
@@ -47,9 +48,18 @@ class ChatRoom extends Component {
         })
         return (
             <div>
+                <Link to='/' className='btn blue darken-4'>Home</Link>
+                <div className="row">
+                    <div className="col s12">
+                        <h4>Chat Room: {name ? name : 'Loading...'}</h4>
+                    </div>
+                </div>
                 <div className="row">
                     <div className="col s6">
-                        <h4>Chat Room: {name ? name : 'Loading...'}</h4>
+                        <h5 className='center-align'>This is where we get chat done</h5>
+                        <ul className='collection'>
+                            {msgs}
+                        </ul>
                     </div>
                     <div className="col s6 center-align">
                         <form>
@@ -57,12 +67,6 @@ class ChatRoom extends Component {
                             <textarea value={this.state.message} onChange={e => this.setState({message: e.target.value})}className="materialize-textarea"></textarea>
                             <button className='btn red darken-3' onClick={this.sendMessage.bind(this)}>Send</button>
                         </form>
-                    </div>
-                    <div className="col s8 offset-s2">
-                        <h5 className='center-align'>This is where we get chat done</h5>
-                        <ul className='collection'>
-                            {msgs}
-                        </ul>
                     </div>
                 </div>
             </div>
